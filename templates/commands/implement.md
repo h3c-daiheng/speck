@@ -82,7 +82,7 @@ You **MUST** consider the user input before proceeding (if not empty).
       - If FEATURE_NAME cannot be determined, use `.` (no subdirectory)
       - All review report paths and phase summary paths below MUST use the resolved `{FEATURE_NAME}` value
 
-   c. **Launch 3 review rounds sequentially**: For each round M = 1, 2, 3:
+   c. **Launch 2 review rounds sequentially**: For each round M = 1, 2:
       1. Read `templates/review-prompt-template.md` and extract the content under the `## Template Body` heading
       2. Replace all placeholders in the extracted content:
          - `{FEATURE_NAME}` → the resolved feature directory name from step b
@@ -100,14 +100,14 @@ You **MUST** consider the user input before proceeding (if not empty).
           1. Read the "Critical Issues Detail" section
           2. Fix ALL Critical issues in the codebase
           3. Commit the fixes
-          4. Launch an **additional review round** using the same template (`templates/review-prompt-template.md`) with an incremented `{ROUND_NUM}` (does not count toward the required 3 rounds)
+          4. Launch an **additional review round** using the same template (`templates/review-prompt-template.md`) with an incremented `{ROUND_NUM}` (does not count toward the required 2 rounds)
           5. Repeat fix cycle until PASS, then proceed to the next round
 
-      - After all 3 required rounds pass (plus any fix-verification rounds), proceed to checkpoint
+      - After all 2 required rounds pass (plus any fix-verification rounds), proceed to checkpoint
 
 7. **No skipping reviews**: You MUST NOT run `./scripts/bash/phase-checkpoint.sh` until:
-   - All 3 required review rounds have PASS verdicts
-   - All review report files exist at `spec_logs/{FEATURE_NAME}/phase-<N>-review-round-{1,2,3}.md`
+   - All 2 required review rounds have PASS verdicts
+   - All review report files exist at `spec_logs/{FEATURE_NAME}/phase-<N>-review-round-{1,2}.md`
    - Any fix-verification rounds also have PASS verdicts
    - Code changes have been committed
 
@@ -239,7 +239,7 @@ You **MUST** consider the user input before proceeding (if not empty).
    - Suggest next steps if implementation cannot proceed
    - **IMPORTANT** For completed tasks, make sure to mark the task off as [X] in the tasks file.
    - **Commit code**: After all tasks in a phase are marked [X], commit all code changes before starting code review.
-   - **Code Review**: Launch 3 sequential review subagents per Phase Gate Rules #6. Fix any Critical issues, commit fixes, and re-review until all rounds pass.
+   - **Code Review**: Launch 2 sequential review subagents per Phase Gate Rules #6. Fix any Critical issues, commit fixes, and re-review until all rounds pass.
    - **Phase Checkpoint**: After all review rounds pass, run the phase-checkpoint.sh script, then update the generated report file (`spec_logs/{FEATURE_NAME}/phase-N-<name>.md`) with actual implementation details — replace all placeholder comments with real content about what was done, quality measures, file changes, and code understanding guidance.
    - **Phase Summary**: After the checkpoint report is filled in, create the phase summary file at `spec_logs/{FEATURE_NAME}/summary/{phase}_summary.md` with the following content (in Chinese):
      - **Phase Goal**：本阶段的目标和范围
