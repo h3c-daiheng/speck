@@ -83,7 +83,7 @@ You **MUST** consider the user input before proceeding (if not empty).
       - All review report paths and phase summary paths below MUST use the resolved `{FEATURE_NAME}` value
 
    c. **Launch 2 review rounds sequentially**: For each round M = 1, 2:
-      1. Read `templates/review-prompt-template.md` and extract the content under the `## Template Body` heading
+      1. Read `.specify/templates/review-prompt-template.md` and extract the content under the `## Template Body` heading. If the file does not exist, ERROR: "Review template not found. Run `specify init` to install missing templates, then retry."
       2. Replace all placeholders in the extracted content:
          - `{FEATURE_NAME}` → the resolved feature directory name from step b
          - `{PHASE_NUM}` → current phase number (e.g. 1, 2, 3)
@@ -100,7 +100,7 @@ You **MUST** consider the user input before proceeding (if not empty).
           1. Read the "Critical Issues Detail" section
           2. Fix ALL Critical issues in the codebase
           3. Commit the fixes
-          4. Launch an **additional review round** using the same template (`templates/review-prompt-template.md`) with an incremented `{ROUND_NUM}` (does not count toward the required 2 rounds)
+          4. Launch an **additional review round** using the same template (`.specify/templates/review-prompt-template.md`) with an incremented `{ROUND_NUM}` (does not count toward the required 2 rounds)
           5. Repeat fix cycle until PASS, then proceed to the next round
 
       - After all 2 required rounds pass (plus any fix-verification rounds), proceed to checkpoint
@@ -240,15 +240,16 @@ You **MUST** consider the user input before proceeding (if not empty).
    - **IMPORTANT** For completed tasks, make sure to mark the task off as [X] in the tasks file.
    - **Commit code**: After all tasks in a phase are marked [X], commit all code changes before starting code review.
    - **Code Review**: Launch 2 sequential review subagents per Phase Gate Rules #6. Fix any Critical issues, commit fixes, and re-review until all rounds pass.
-   - **Phase Checkpoint**: After all review rounds pass, run the phase-checkpoint.sh script, then update the generated report file (`spec_logs/{FEATURE_NAME}/phase-N-<name>.md`) with actual implementation details — replace all placeholder comments with real content about what was done, quality measures, file changes, and code understanding guidance.
-   - **Phase Summary**: After the checkpoint report is filled in, create the phase summary file at `spec_logs/{FEATURE_NAME}/summary/{phase}_summary.md` with the following content (in Chinese):
-     - **Phase Goal**：本阶段的目标和范围
-     - **Acceptance Criteria**：验收标准列表及是否满足
-     - **交付物**：当前阶段完成的具体事项
-     - **设计决策**：关键设计决策及理由
-     - **质量保证措施**：测试、lint、review 等
-     - **代码变更**：修改文件列表及原因
-     - **合理性评估**：代码修改是否合理、遗留风险
+   - **Phase Summary & Checkpoint**: After all review rounds pass:
+     1. Generate the unified phase summary (replaces old checkpoint report + summary) using `.specify/templates/phase-summary-template.md`. If the file does not exist, ERROR: "Phase summary template not found at `.specify/templates/phase-summary-template.md`. Run `specify init` to install missing templates, then retry."
+        - Read the template and extract the content under the `## Template Body` heading
+        - Replace placeholders: `{FEATURE_NAME}`, `{PHASE_NUM}`, `{PHASE_NAME}`, `{TASKS_TOTAL}`, `{TASKS_DONE}`, `{PHASE_GOAL}`, `{GIT_STATS}`, `{NEXT_PHASE_NUM}`, `{NEXT_PHASE_NAME}`
+        - Write to `spec_logs/{FEATURE_NAME}/phase-{N}-{name}.md`
+        - Replace all `<!-- ACTION REQUIRED: ... -->` comments with actual content
+     2. Run the checkpoint script to verify and commit:
+        ```sh
+        ./scripts/bash/phase-checkpoint.sh {N} "{phase-name}" "{one-line summary}"
+        ```
    - Update the Phase Checklist table to mark the phase as COMPLETE.
 
 9. Completion validation:

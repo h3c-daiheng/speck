@@ -1,5 +1,5 @@
 #!/usr/bin/env pwsh
-# phase-checkpoint.ps1 — Create a phase report + git commit after each Phase completion.
+# phase-checkpoint.ps1 — Verify phase completion and commit the phase summary report.
 #
 # Usage: phase-checkpoint.ps1 -PhaseNumber <int> -PhaseName <string> -PhaseSummary <string>
 #   -PhaseNumber    Numeric phase index (e.g. 1, 2, 3)
@@ -9,8 +9,9 @@
 # Example:
 #   ./scripts/powershell/phase-checkpoint.ps1 -PhaseNumber 2 -PhaseName "foundational" -PhaseSummary "Implement core infrastructure and auth framework"
 #
-# IMPORTANT: This script is called AFTER all code changes have been committed and
-# code review has passed. It generates the phase report and commits the report itself.
+# IMPORTANT: This script is called AFTER all code changes have been committed,
+# code review has passed, and the phase summary has been written to the report file.
+# It verifies the summary exists, checks review reports, and commits the summary.
 
 $ErrorActionPreference = 'Stop'
 
@@ -36,7 +37,7 @@ if (-not $hasGit) {
     Write-Warning "[phase-checkpoint] Warning: git not available — skipping commit"
 }
 
-# --- Create spec_logs directory ---
+# --- Resolve spec_logs directory ---
 $REPO_ROOT = Get-RepoRoot
 $featureEnv = Get-FeaturePathsEnv
 $FEATURE_DIR = $featureEnv.FEATURE_DIR
@@ -52,81 +53,19 @@ if ($FEATURE_NAME) {
 }
 New-Item -ItemType Directory -Force -Path $LOGS_DIR | Out-Null
 
-# --- Gather file change stats for the report (from the most recent commit) ---
-$GIT_STATS = ''
-if ($hasGit) {
-    try {
-        $GIT_STATS = git log -1 --stat --format='' 2>$null
-    } catch {
-        $GIT_STATS = '(无 git 统计信息)'
-    }
-}
-
-# --- Generate report file ---
+# --- Resolve report file path (must match phase-summary-template.md output path) ---
 $REPORT_FILE = Join-Path $LOGS_DIR "phase-${PhaseNumber}-${PhaseName}.md"
 
-$reportContent = @"
-# 阶段 ${PhaseNumber} 报告：${PhaseName}
-
-**日期**: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')
-**摘要**: ${PhaseSummary}
-
-## 本阶段完成的工作
-
-<!-- AI: 用中文总结本阶段已完成的任务和成果 -->
-
-- [描述本阶段实现的功能]
-- [列出创建或修改的关键文件]
-- [记录与计划的偏差（如有）]
-
-## 质量保证
-
-<!-- AI: 描述本阶段的工作是如何被验证的 -->
-
-- **任务完成度**: [本阶段 N/M 项任务]
-- **测试执行**: [描述编写/运行的测试及结果]
-- **手动验证**: [执行的手动检查]
-- **已知问题**: [遗留的未解决问题]
-
-## 代码变更
-
-<!-- AI: 用中文总结创建/修改的文件及其用途 -->
-
-### 新增文件
-
-- [文件路径] — [用途说明]
-
-### 修改文件
-
-- [文件路径] — [修改内容及原因]
-
-### Git Diff 摘要
-
-```
-${GIT_STATS}
-```
-
-## 代码理解指南
-
-<!-- AI: 用中文引导读者理解本阶段实现的关键概念 -->
-
-- [入口点]: [从哪里开始阅读代码]
-- [关键决策]: [为什么选择某种实现方式]
-- [注意事项]: [任何令人意外或容易踩坑的地方]
-
-## 下一阶段
-
-- **下一步**: 阶段 $($PhaseNumber + 1) — [名称，来自 tasks.md]
-- **前置条件已满足**: [确认本阶段的产出已为下一阶段做好准备]
-"@
-
-$reportContent | Out-File -LiteralPath $REPORT_FILE -Encoding UTF8
-
-Write-Host "[phase-checkpoint] Report written to: $REPORT_FILE"
+# --- Verify phase summary report exists ---
+if (-not (Test-Path -LiteralPath $REPORT_FILE -PathType Leaf)) {
+    [Console]::Error.WriteLine("[phase-checkpoint] ERROR: Phase summary report not found: $REPORT_FILE")
+    [Console]::Error.WriteLine('[phase-checkpoint] The phase summary must be generated before running checkpoint.')
+    exit 1
+}
 
 # --- Verify code review was completed ---
 $MISSING_REVIEWS = $false
-foreach ($round in 1..3) {
+foreach ($round in 1..2) {
     $REVIEW_FILE = Join-Path $LOGS_DIR "phase-${PhaseNumber}-review-round-${round}.md"
     if (-not (Test-Path -LiteralPath $REVIEW_FILE -PathType Leaf)) {
         [Console]::Error.WriteLine("[phase-checkpoint] ERROR: Missing review report: $REVIEW_FILE")
@@ -136,12 +75,11 @@ foreach ($round in 1..3) {
 
 if ($MISSING_REVIEWS) {
     [Console]::Error.WriteLine('[phase-checkpoint] ERROR: Code review MUST be completed before checkpoint.')
-    [Console]::Error.WriteLine('[phase-checkpoint] Run all 3 review rounds and ensure report files exist in spec_logs/.')
+    [Console]::Error.WriteLine('[phase-checkpoint] Run all 2 review rounds and ensure report files exist in spec_logs/.')
     exit 1
 }
 
 # --- Verify report content was filled in (no unreplaced placeholders) ---
-# The AI must replace all placeholder comments with real content before we proceed.
 $placeholderPatterns = @(
     '\[描述'
     '\[本阶段'
@@ -153,6 +91,16 @@ $placeholderPatterns = @(
     '\[任何'
     '\[名称，来自'
     '\[确认'
+    '\[验收标准'
+    '\[具体交付物'
+    '\[决策内容'
+    '\[风险描述'
+    '\[入口点'
+    '\[关键决策'
+    '\[注意事项'
+    '\[框架名称'
+    '\[工具名称'
+    '<!-- ACTION REQUIRED:'
     '<!-- AI:'
 )
 
@@ -177,7 +125,7 @@ if ($hasGit) {
     # Only commit if there's something to commit
     $stagedChanges = git diff --cached --quiet 2>$null
     if ($LASTEXITCODE -ne 0) {
-        $COMMIT_MSG = "[Phase ${PhaseNumber}] ${PhaseName}: ${PhaseSummary} (checkpoint report)"
+        $COMMIT_MSG = "[Phase ${PhaseNumber}] ${PhaseName}: ${PhaseSummary}"
         git commit -m $COMMIT_MSG
         Write-Host "[phase-checkpoint] Committed: $COMMIT_MSG"
     } else {
