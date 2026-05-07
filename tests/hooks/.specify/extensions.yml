@@ -32,3 +32,20 @@ hooks:
       command: "post_tasks_test"
       description: "Test after tasks hook execution"
       prompt: "Would you like to run the post-tasks test?"
+
+  before_phase:
+    - id: pre_phase_test
+      enabled: true
+      optional: false
+      extension: "test-extension"
+      command: "pre_phase_test"
+      description: "Test before phase hook execution"
+
+  after_phase:
+    - id: post_phase_test
+      enabled: true
+      optional: true
+      extension: "test-extension"
+      command: "post_phase_test"
+      description: "Test after phase hook execution"
+      prompt: "Would you like to run the post-phase test?"
