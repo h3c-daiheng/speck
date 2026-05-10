@@ -189,6 +189,68 @@ detect_from_references() {
     return 1
 }
 
+# Helper: detect from plan.md tech stack
+detect_from_plan() {
+    local plan_file="$PROJECT_ROOT/specs/$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo 'main')/plan.md"
+    if [[ ! -f "$plan_file" ]]; then
+        # Try any plan.md under specs/
+        plan_file=$(find "$PROJECT_ROOT/specs" -maxdepth 2 -name "plan.md" 2>/dev/null | head -1)
+    fi
+    if [[ -z "$plan_file" ]] || [[ ! -f "$plan_file" ]]; then
+        return 1
+    fi
+
+    local content
+    content=$(cat "$plan_file" 2>/dev/null || echo "")
+
+    # Python
+    if echo "$content" | grep -qiE "python|flask|django|fastapi"; then
+        FRAMEWORK="pytest"
+        COMMAND="pytest"
+        FILE_PATTERN="test_*.py"
+        TEST_DIR="tests/"
+        return 0
+    fi
+
+    # JavaScript/TypeScript
+    if echo "$content" | grep -qiE "node\.js|typescript|javascript|react|express|next\.js|nestjs"; then
+        FRAMEWORK="jest"
+        COMMAND="npx jest"
+        FILE_PATTERN="*.test.js"
+        TEST_DIR="tests/"
+        return 0
+    fi
+
+    # Go
+    if echo "$content" | grep -qiE "\bgo\b|golang|gin|echo"; then
+        FRAMEWORK="go-test"
+        COMMAND="go test"
+        FILE_PATTERN="*_test.go"
+        TEST_DIR=""
+        return 0
+    fi
+
+    # Rust
+    if echo "$content" | grep -qiE "rust|cargo|actix|rocket"; then
+        FRAMEWORK="rust-test"
+        COMMAND="cargo test"
+        FILE_PATTERN="*.rs"
+        TEST_DIR="tests/"
+        return 0
+    fi
+
+    # Java
+    if echo "$content" | grep -qiE "java|spring|maven|gradle"; then
+        FRAMEWORK="junit"
+        COMMAND="mvn test"
+        FILE_PATTERN="*Test.java"
+        TEST_DIR="src/test/java/"
+        return 0
+    fi
+
+    return 1
+}
+
 # --- Main detection logic ---
 # Priority 1: Reference scripts (if path provided via env)
 REF_DIR="${SPEC_TEST_REFERENCES_DIR:-}"
@@ -199,6 +261,9 @@ elif detect_from_deps; then
     : # found
 # Priority 3: Existing test files
 elif detect_from_files; then
+    : # found
+# Priority 4: plan.md tech stack
+elif detect_from_plan; then
     : # found
 else
     FRAMEWORK="unknown"
