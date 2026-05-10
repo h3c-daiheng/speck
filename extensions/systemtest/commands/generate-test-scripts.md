@@ -58,7 +58,49 @@ You **MUST** consider the user input before proceeding (if not empty).
 
 7. **Write output**: Save generated scripts to `spec_test/{feature}/scripts/`
 
-8. **Report**: Output summary to the user:
+8. **Review Phase**: Launch parallel subagents to review the generated test scripts from multiple dimensions, then analyze and fix issues.
+
+   Read the review prompt templates from `extensions/systemtest/prompts/review-test-scripts.md`. Use the Agent tool to dispatch 3 review subagents **in parallel**, constructing each prompt by replacing the placeholders in the templates with actual file paths:
+
+   - **Subagent A — 用例映射与断言充分性**: Verify every TC-XXX has a corresponding test function with adequate assertions.
+   - **Subagent B — 框架规范与代码质量**: Verify scripts follow framework conventions and maintain good code quality.
+   - **Subagent C — 可运行性与测试隔离性**: Verify scripts can actually run and tests are properly isolated.
+
+   **Main Agent Analysis**: After all subagents complete, analyze the collected review opinions:
+
+   a. **Aggregate scores** — compute average score per dimension; flag any dimension scoring below 7/10.
+
+   b. **Classify each ISSUE** by severity:
+      - **CRITICAL** (must fix): Missing test function for a TC-XXX; test function with no assertions; import errors that prevent execution.
+      - **MAJOR** (should fix): Weak assertions that don't verify the expected result; framework convention violations; test order dependencies; missing setup/teardown.
+      - **MINOR** (report only): Code style issues; minor naming improvements; optimization suggestions.
+
+   c. **Fix**:
+      - Fix ALL CRITICAL issues immediately by updating the affected files in `spec_test/{feature}/scripts/`.
+      - Fix MAJOR issues unless the subagent's concern is based on a misunderstanding of the project context.
+      - Do NOT fix MINOR issues — only report them.
+
+   d. **Report review results** to the user:
+      ```text
+      ### Review Summary
+
+      | Dimension | Score | Issues |
+      |-----------|-------|--------|
+      | 用例映射完整性 | X/10 | Critical: N, Major: N |
+      | 断言充分性 | X/10 | Critical: N, Major: N |
+      | 框架规范 | X/10 | Critical: N, Major: N |
+      | 代码质量 | X/10 | Critical: N, Major: N |
+      | 可运行性 | X/10 | Critical: N, Major: N |
+      | 测试隔离性 | X/10 | Critical: N, Major: N |
+      | 错误处理与健壮性 | X/10 | Critical: N, Major: N |
+
+      - **Fixed**: {count} critical/major issues
+      - **Remaining**: {count} minor issues (see details above)
+      ```
+
+   e. If fixes were applied, summarize what was changed and why.
+
+9. **Report**: Output final summary to the user:
 
    ```text
    ## Test Scripts Generated
