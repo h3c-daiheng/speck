@@ -1367,6 +1367,25 @@ def init(
             else:
                 tracker.skip("git", "--no-git flag")
 
+            # Install bundled systemtest extension
+            try:
+                from .extensions import ExtensionManager
+                bundled_st_path = _locate_bundled_extension("systemtest")
+                if bundled_st_path:
+                    st_manager = ExtensionManager(project_path)
+                    if st_manager.registry.is_installed("systemtest"):
+                        tracker.complete("systemtest", "extension already installed")
+                    else:
+                        st_manager.install_from_directory(
+                            bundled_st_path, get_speckit_version()
+                        )
+                        tracker.complete("systemtest", "extension installed")
+                else:
+                    tracker.skip("systemtest", "bundled extension not found")
+            except Exception as st_err:
+                sanitized_st = str(st_err).replace('\n', ' ').strip()
+                tracker.error("systemtest", f"extension install failed: {sanitized_st[:120]}")
+
             # Install bundled speckit workflow
             try:
                 bundled_wf = _locate_bundled_workflow("speckit")
