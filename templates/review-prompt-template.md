@@ -40,10 +40,11 @@ Write your review report to: `{OUTPUT_PATH}`
 IMPORTANT: Before writing, ensure the directory exists (use `mkdir -p` on the parent directory).
 
 ### Review Criteria — Check ALL of these
-1. **Spec Compliance**: Does the implementation fully satisfy all user stories and acceptance criteria in spec.md? Are there features implemented that are NOT in the spec (scope creep)?
-2. **Architecture Adherence**: Does the code follow the architecture described in plan.md? Are module boundaries respected? Does data flow match the plan?
-3. **Code Quality**: Is the code readable, well-structured, and maintainable? Are there duplicated code blocks? Are error handling and edge cases addressed?
-4. **Security**: Are there any security vulnerabilities (injection, auth bypass, data exposure, unsafe file operations)?
+1. **Phase Task Coverage**: Read tasks.md and locate the current Phase {PHASE_NUM} section. For every task marked [X] in this phase, verify that it has been genuinely implemented — the code change exists, is functional, and matches the task description. Flag any task marked complete but with missing, incomplete, or placeholder implementation.
+2. **Spec Compliance**: Does the implementation fully satisfy all user stories and acceptance criteria in spec.md? Are there features implemented that are NOT in the spec (scope creep)?
+3. **Architecture Adherence**: Does the code follow the architecture described in plan.md? Are module boundaries respected? Does data flow match the plan?
+4. **Code Quality**: Is the code readable, well-structured, and maintainable? Are there duplicated code blocks? Are error handling and edge cases addressed?
+5. **Security**: Are there any security vulnerabilities (injection, auth bypass, data exposure, unsafe file operations)?
 
 ### Severity Classification
 - **Critical**: Security vulnerabilities, data loss risk, core feature not implemented, direct contradiction with spec requirements
@@ -53,8 +54,9 @@ IMPORTANT: Before writing, ensure the directory exists (use `mkdir -p` on the pa
 ### Your Task
 1. Read all context files listed above
 2. Review every changed file in this phase's diff
-3. Cross-reference implementation against spec.md user stories and acceptance criteria
-4. Cross-reference implementation against plan.md architecture decisions
+3. Cross-reference implementation against tasks.md — verify every [X] task in this phase has real code backing it
+4. Cross-reference implementation against spec.md user stories and acceptance criteria
+5. Cross-reference implementation against plan.md architecture decisions
 5. Write a review report to: `{OUTPUT_PATH}`
 
 ### Report Format
