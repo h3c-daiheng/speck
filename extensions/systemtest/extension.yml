@@ -1,0 +1,42 @@
+schema_version: "1.0"
+
+extension:
+  id: systemtest
+  name: "System Test"
+  version: "1.0.0"
+  description: "系统测试扩展：生成测试用例、测试脚本，执行并报告结果"
+  author: spec-kit-core
+  repository: https://github.com/github/spec-kit
+  license: MIT
+
+requires:
+  speckit_version: ">=0.2.0"
+
+provides:
+  commands:
+    - name: speckit.systemtest.generate-test-cases
+      file: commands/generate-test-cases.md
+      description: "基于设计文档生成系统测试用例"
+
+    - name: speckit.systemtest.generate-test-scripts
+      file: commands/generate-test-scripts.md
+      description: "基于测试用例生成可执行的测试脚本"
+
+    - name: speckit.systemtest.run-test-scripts
+      file: commands/run-test-scripts.md
+      description: "执行测试脚本并输出详细的过程和结果报告"
+
+  config:
+    - name: "systemtest-config.yml"
+      template: "config-template.yml"
+      description: "系统测试配置"
+      required: false
+
+tags:
+  - "testing"
+  - "system-test"
+  - "e2e"
+
+defaults:
+  test_framework: auto
+  timeout: 300
