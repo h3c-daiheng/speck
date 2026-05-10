@@ -24,9 +24,9 @@ You **MUST** consider the user input before proceeding (if not empty).
    - Create `spec_test/{feature}/reports/` directory if it does not exist
 
 3. **Detect test framework**:
-   - Run `extensions/systemtest/scripts/bash/detect-test-framework.sh --json --project-root {repo_root}`
-   - Parse framework and command from JSON output
-   - If framework is "unknown": ERROR: "Cannot detect test framework. Specify in config or provide reference scripts."
+   - Read the test files in `spec_test/{feature}/scripts/` to determine which framework they use (check imports, syntax, file extensions)
+   - Cross-reference with project dependency files (`package.json`, `pyproject.toml`, `go.mod`, etc.) to confirm the correct run command
+   - If framework cannot be determined: Ask the user to specify the test run command
 
 4. **Read timeout config** (if available):
    - Check `.specify/extensions/systemtest/systemtest-config.yml` for `timeout` value

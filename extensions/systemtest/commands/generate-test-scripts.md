@@ -23,11 +23,18 @@ You **MUST** consider the user input before proceeding (if not empty).
    - If not found: ERROR: "Test cases not found. Run `speckit.systemtest.generate-test-cases` first."
    - Create `spec_test/{feature}/scripts/` directory if it does not exist
 
-3. **Detect test framework**:
-   - Set `SPEC_TEST_REFERENCES_DIR` to `spec_test/{feature}/references/` (if exists)
-   - Run `extensions/systemtest/scripts/bash/detect-test-framework.sh --json --project-root {repo_root}`
-   - Parse JSON output to get: framework, command, file_pattern, test_dir
-   - If framework is "unknown": Ask the user to specify a framework or provide reference scripts in `spec_test/{feature}/references/`
+3. **Detect test framework** (priority order):
+   - **Priority 1**: Read `spec_test/{feature}/references/` code files — if reference scripts exist, use the same framework and follow their patterns
+   - **Priority 2**: Scan project root for dependency/config files and infer framework:
+     - Read `package.json` (look for jest, vitest, mocha in dependencies/devDependencies)
+     - Read `pyproject.toml` / `setup.cfg` / `pytest.ini` (look for pytest, unittest)
+     - Read `go.mod` (go test)
+     - Read `Cargo.toml` (cargo test)
+     - Read `pom.xml` / `build.gradle` (junit)
+   - **Priority 3**: Read `specs/{feature}/plan.md` tech stack section and infer the default framework for that language
+   - **Priority 4**: Scan project for existing test files (`test_*.py`, `*.test.js`, `*_test.go`, etc.)
+   - If framework still cannot be determined: Ask the user to specify a framework or provide reference scripts in `spec_test/{feature}/references/`
+   - Record the detected: framework name, run command, file naming pattern
 
 4. **Load inputs**:
    - Read `spec_test/{feature}/test-cases.md` — the test case document
