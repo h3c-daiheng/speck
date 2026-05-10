@@ -1,0 +1,34 @@
+# System Test Extension Configuration
+# Copy to systemtest-config.yml and customize for your project
+
+# Test framework settings
+test_framework: auto  # auto | pytest | jest | go-test | unittest | vitest | mocha
+# auto = detect from project (references/ → existing tests → plan.md tech stack)
+
+# Test execution timeout in seconds
+timeout: 300
+
+# Test report settings
+reports:
+  # Output directory (relative to spec_test/{feature}/)
+  directory: "reports"
+
+  # Report filename pattern
+  filename_pattern: "report-{timestamp}"
+
+# Test case generation settings
+generation:
+  # Include boundary value tests
+  include_boundary: true
+
+  # Include error handling tests
+  include_error_handling: true
+
+  # Include concurrency tests
+  include_concurrency: false
+
+  # Default test case priority levels to generate
+  priorities:
+    - P1  # Critical path
+    - P2  # Important scenarios
+    - P3  # Edge cases
